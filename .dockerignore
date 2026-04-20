@@ -1,0 +1,17 @@
+.git
+.gitignore
+README.md
+
+frontend/node_modules
+frontend/.next
+frontend/.git
+frontend/.env.local
+
+backend/.git
+backend/bin
+backend/tmp
+backend/.env
+
+**/node_modules
+**/.next
+**/.DS_Store
