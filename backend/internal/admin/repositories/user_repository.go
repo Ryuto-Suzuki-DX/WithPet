@@ -1,11 +1,22 @@
 package repositories
 
 import (
+	"errors"
+	"time"
 	"withpet/backend/internal/database"
 	"withpet/backend/internal/models"
 
 	"gorm.io/gorm"
 )
+
+type UserRepositoryInterface interface {
+	CountUsers(query *gorm.DB) (int64, error)
+	FindUsers(query *gorm.DB) ([]models.User, error)
+	FindUserByEmail(query *gorm.DB) (models.User, error)
+	CreateUser(user *models.User) error
+	UpdateUser(query *gorm.DB) error
+	DeleteUser(query *gorm.DB) error
+}
 
 type UserRepository struct{}
 
@@ -54,6 +65,37 @@ func (r *UserRepository) FindUserByEmail(query *gorm.DB) (models.User, error) {
 func (r *UserRepository) CreateUser(user *models.User) error {
 	if err := database.DB.Create(user).Error; err != nil {
 		return err
+	}
+
+	return nil
+}
+
+// 編集
+func (r *UserRepository) UpdateUser(query *gorm.DB) error {
+	if query.Error != nil {
+		return query.Error
+	}
+
+	if query.RowsAffected == 0 {
+		return errors.New("対象ユーザーが存在しません")
+	}
+
+	return nil
+}
+
+// 削除
+func (r *UserRepository) DeleteUser(query *gorm.DB) error {
+	result := query.Updates(map[string]interface{}{
+		"is_deleted": true,
+		"deleted_at": time.Now(),
+	})
+
+	if result.Error != nil {
+		return result.Error
+	}
+
+	if result.RowsAffected == 0 {
+		return errors.New("対象ユーザーが存在しません")
 	}
 
 	return nil

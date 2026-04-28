@@ -9,11 +9,19 @@ export const ENDPOINTS = {
     me: "/api/v1/auth/me",
   },
 
+  /*
+   * ADMIN
+   */
+  // ユーザー関連
   admin: {
     users: "/api/v1/admin/users",
     userDetail: (userId: string) => `/api/v1/admin/users/${userId}`,
   },
 
+  /*
+   * USER
+   */
+  // マイページ？
   user: {
     mypage: "/api/v1/user/mypage",
   },

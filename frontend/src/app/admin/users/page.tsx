@@ -5,15 +5,10 @@ import { useRouter } from "next/navigation";
 import { Menu } from "lucide-react";
 import UserSearchForm from "@/components/feature/admin/UserSearchForm";
 import UserTable from "@/components/feature/admin/UserTable";
-import { ApiResponse, SearchListData, extractSearchListData } from "@/lib/data";
+import { extractSearchListData } from "@/api/data";
+import { searchUsers } from "@/api/admin";
+import type { User } from "@/types/admin/admin_type"
 import SideMenu from "../sideMenu/sideMenu";
-
-type User = {
-  id: number;
-  name: string;
-  email: string;
-  role: string;
-};
 
 export default function AdminUsersPage() {
   const router = useRouter();
@@ -29,69 +24,57 @@ export default function AdminUsersPage() {
   const [hasMore, setHasMore ] = useState(false);
   const [isFetchingMore, setIsFetchingMore] = useState(false);
 
-  async function fetchUsers(searchWord: string) {
+  // 初回ロード時の初期値(検索用)
+  const INITIAL_SEARCH_PARAMS = {
+    keyword:  "",
+    offset:   0,
+    limit:    50,
+  };
+
+  // 検索用API呼び出し(引数無しの場合にのみINITIAL_SEARCH_PARAMS.keyworを使用する)
+  async function fetchUsers(searchWord: string = INITIAL_SEARCH_PARAMS.keyword) {
     setIsLoading(true);
     setError("");
 
-    try {
-      const response = await fetch(
-          `http://localhost:8080/api/v1/admin/users?keyword=${encodeURIComponent(searchWord)}&offset=0&limit=${limit}`,
-      {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("withpet_access_token") ?? ""}`,
-        },
-        cache: "no-store",
+    try{
+      const result = await searchUsers({
+        ...INITIAL_SEARCH_PARAMS,
+        keyword: searchWord,
       });
 
-      if (!response.ok) {
-        throw new Error("ユーザー一覧の取得に失敗しました。");
-      }
-
-      const result = await response.json() as ApiResponse<SearchListData<User>>;
       const { users: userList, hasMore } = extractSearchListData<User>(result);
-
-      setUsers(userList);
-      setHasMore(hasMore);
+      
+        setUsers(userList);
+        setHasMore(hasMore);
     } catch (err) {
       console.error(err);
       setError("ユーザー一覧の取得に失敗しました。");
       setUsers([]);
-      setHasMore(false)
+      setHasMore(false);
     } finally {
       setIsLoading(false);
     }
   }
 
+  // 「もっとみる」ボタンAPI呼び出し
   async function fetchMoreUsers() {
     if (!hasMore || isFetchingMore) return;
 
     setIsFetchingMore(true);
     setError("");
 
-    try {
-      const response = await fetch(
-      `http://localhost:8080/api/v1/admin/users?keyword=${encodeURIComponent(searchKeyword)}&offset=${users.length}&limit=${limit}`,
-      {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization:  `Bearer ${localStorage.getItem("withpet_access_token") ?? ""}`,
-        },
-        cache: "no-store",
-      }
-    );
+    try{
+      const result = await searchUsers({
+        keyword:  searchKeyword,
+        offset:   users.length,
+        limit:    INITIAL_SEARCH_PARAMS.limit,
+      });
 
-    if (!response.ok) {
-      throw new Error("追加のユーザー取得に失敗しました。");
-    }
+      const { users: nextUsers, hasMore: nextHasMore } =
+      extractSearchListData<User>(result);
 
-    const result = await response.json() as ApiResponse<SearchListData<User>>;
-    const { users: nextUsers, hasMore: nextHasMore } = extractSearchListData<User>(result);
-
-    setUsers((prev) => [...prev, ...nextUsers]);
-    setHasMore(nextHasMore);
+      setUsers((prev) => [...prev, ...nextUsers]);
+      setHasMore(nextHasMore);
     } catch (err) {
       console.error(err);
       setError("追加のユーザー取得に失敗しました。");
@@ -100,24 +83,33 @@ export default function AdminUsersPage() {
     }
   }
 
+  /*
+   * トリガー集
+   */
+
+  // 初回ロード
   useEffect(() => {
-    fetchUsers("");
+    fetchUsers();
   }, []);
 
+  // 通常検索
   function handleSearch() {
     setSearchKeyword(keyword);
     fetchUsers(keyword);
   }
 
+  // 検索条件クリア
   function handleClear() {
     setKeyword("");
     setSearchKeyword("");
     fetchUsers("");
   }
 
+  // 新規作成(画面遷移)
   function handleCreate() {
     router.push("/admin/users/new");
   }
+
 
   return (
     <>

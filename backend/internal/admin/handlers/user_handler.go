@@ -38,40 +38,56 @@ func NewUserHandler(userService *services.UserService) *UserHandler {
 	}
 }
 
+// 通常エラー処理用
+func respondError(c *gin.Context, status int, code string, err error) {
+	c.JSON(status, gin.H{
+		"data":    nil,
+		"error":   true,
+		"code":    code,
+		"message": err.Error(),
+		"detail":  err.Error(),
+	})
+}
+
+// リクエスト不正系エラー処理用
+func respondBadRequest(c *gin.Context, code string, err error) {
+	c.JSON(http.StatusBadRequest, gin.H{
+		"data":    nil,
+		"error":   true,
+		"code":    code,
+		"message": "リクエストの形式が不正です。",
+		"detail":  err.Error(),
+	})
+}
+
+// 成功レスポンス用
+func respondSuccess(c *gin.Context, status int, data interface{}, message string) {
+	c.JSON(status, gin.H{
+		"data":    data,
+		"error":   false,
+		"code":    "",
+		"message": message,
+		"detail":  nil,
+	})
+}
+
 // 一覧取得
 func (h *UserHandler) SearchUsers(c *gin.Context) {
 	var req types.SearchUsersRequest
 	// クエリパラメータを受け取る
 	if err := c.ShouldBindQuery(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"data":    nil,
-			"error":   true,
-			"code":    "INVALID_QUERY",
-			"message": "クエリパラメータの形式が不正です",
-			"detail":  err.Error(),
-		})
+		respondBadRequest(c, "INVALID_QUERY", err)
 		return
 	}
 
+	// 各エラー
 	response, err := h.userService.SearchUsers(req)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"data":    nil,
-			"error":   true,
-			"code":    "SEARCH_USERS_FAILED",
-			"message": "ユーザーの取得に失敗しました",
-			"detail":  err.Error(),
-		})
+		respondError(c, http.StatusInternalServerError, "SEARCH_USERS_FAILED", err)
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"data":    response,
-		"error":   false,
-		"code":    "",
-		"message": "ユーザーの取得に成功しました",
-		"detail":  nil,
-	})
+	respondSuccess(c, http.StatusOK, response, "ユーザーの取得に成功しました。")
 }
 
 // 新規作成
@@ -80,33 +96,54 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
 
 	// リクエストJSONを受け取る
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"data":    nil,
-			"error":   true,
-			"code":    "INVALID_REQUEST",
-			"message": "リクエストの形式が不正です",
-			"detail":  err.Error(),
-		})
+		respondBadRequest(c, "INVALID_REQUEST", err)
 		return
 	}
 
 	user, err := h.userService.CreateUser(req)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"data":    nil,
-			"error":   true,
-			"code":    "CREATE_USER_FAILED",
-			"message": "ユーザーの作成に失敗しました",
-			"detail":  err.Error(),
-		})
+		respondError(c, http.StatusInternalServerError, "CREATE_USER_FAILED", err)
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{
-		"data":    user,
-		"error":   false,
-		"code":    "",
-		"message": "ユーザーの作成に成功しました",
-		"detail":  nil,
-	})
+	respondSuccess(c, http.StatusCreated, user, "ユーザーの作成に成功しました。")
+}
+
+// 編集
+func (h *UserHandler) UpdateUser(c *gin.Context) {
+	var req types.UpdateUserRequest
+
+	// リクエストJSONを受け取る
+	if err := c.ShouldBindJSON(&req); err != nil {
+		respondBadRequest(c, "INVALID_REQUEST", err)
+		return
+	}
+
+	// 編集実行
+	user, err := h.userService.UpdateUser(req)
+	if err != nil {
+		respondError(c, http.StatusInternalServerError, "UPDATE_USER_FAILED", err)
+		return
+	}
+
+	respondSuccess(c, http.StatusOK, user, "ユーザーの編集に成功しました。")
+}
+
+// 削除
+func (h *UserHandler) DeleteUser(c *gin.Context) {
+	var req types.DeleteUserRequest
+
+	// リクエストJSONを受け取る
+	if err := c.ShouldBindJSON(&req); err != nil {
+		respondBadRequest(c, "INVALID_ID_REQUEST", err)
+		return
+	}
+
+	// 削除実行
+	if err := h.userService.DeleteUser(req); err != nil {
+		respondError(c, http.StatusInternalServerError, "DELETE_USER_FAILED", err)
+		return
+	}
+
+	respondSuccess(c, http.StatusOK, gin.H{"id": req.ID}, "ユーザーの削除に成功しました。")
 }

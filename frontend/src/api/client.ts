@@ -9,6 +9,14 @@ type ApiClientOptions = RequestInit & {
   auth?: boolean;
 };
 
+type ApiErrorResponse = {
+  data?: unknown;
+  error?: boolean;
+  code?: string;
+  message?: string;
+  detail?: unknown;
+};
+
 async function parseResponse<T>(response: Response): Promise<T> {
   const contentType = response.headers.get("content-type");
 
@@ -37,7 +45,7 @@ export async function apiClient<T>(
     cache: "no-store",
   });
 
-  const data = await parseResponse<T | { message?: string }>(response);
+  const data = await parseResponse<T | ApiErrorResponse>(response);
 
   if (response.status === 401) {
     removeAccessToken();
@@ -45,9 +53,11 @@ export async function apiClient<T>(
   }
 
   if (!response.ok) {
+    const errorData = data as ApiErrorResponse;
+
     const message =
-      typeof data === "object" && data !== null && "message" in data
-        ? data.message || "API request failed"
+      typeof errorData.message === "string" && errorData.message.trim() !== ""
+        ? errorData.message
         : "API request failed";
 
     throw new Error(message);
