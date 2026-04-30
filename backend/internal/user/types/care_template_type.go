@@ -22,6 +22,7 @@ type CareTemplateResponse struct {
 	TemplateType string `json:"templateType"`
 	Name         string `json:"name"`
 	ImageKey     string `json:"imageKey"`
+	ImageURL     string `json:"imageUrl"`
 
 	Items []CareTemplateItemResponse `json:"items"`
 

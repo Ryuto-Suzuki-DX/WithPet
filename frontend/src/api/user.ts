@@ -7,8 +7,17 @@ import { ENDPOINTS } from "./endpoints";
 import type { ApiResponse } from "@/types/admin/admin_type";
 import type { MyPageData } from "@/types/user/user_type";
 import type { RemindSetting, UpdateRemindSettingRequest } from "@/types/user/user_setting_type";
-import type { PetEvent, CreatePetEventRequest, UpdatePetEventRequest } from "@/types/user/user_pet_event_type";
-import type { CareTemplate, CareTemplateType, CreateCareTemplateRequest, UpdateCareTemplateRequest, } from "@/types/user/user_care_template_type"
+import type {
+  PetEvent,
+  CreatePetEventRequest,
+  UpdatePetEventRequest,
+} from "@/types/user/user_pet_event_type";
+import type {
+  CareTemplate,
+  CareTemplateType,
+  CreateCareTemplateRequest,
+  UpdateCareTemplateRequest,
+} from "@/types/user/user_care_template_type";
 
 /*
  * 〇マイページ取得
@@ -154,5 +163,25 @@ export async function deleteCareTemplate(
 export async function sendRemindTestEmail(): Promise<void> {
   await apiClient(ENDPOINTS.user.remindTestEmail, {
     method: "POST",
+  });
+}
+
+/*
+ * 〇画像アップロード
+ */
+export type UploadUserImageResponse = {
+  imageUrl: string;
+  imageKey: string;
+};
+
+export async function uploadUserImage(
+  file: File
+): Promise<ApiResponse<UploadUserImageResponse>> {
+  const formData = new FormData();
+  formData.append("image", file);
+
+  return apiClient<ApiResponse<UploadUserImageResponse>>(ENDPOINTS.user.images, {
+    method: "POST",
+    body: formData,
   });
 }

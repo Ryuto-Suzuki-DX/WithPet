@@ -23,6 +23,7 @@ export const ENDPOINTS = {
    */
   user: {
     mypage: "/api/v1/user/mypage",
+    images: "/api/v1/user/images",
     petDetail: (petId: string) => `/api/v1/user/pets/${petId}`,
     remindSetting: "/api/v1/user/settings/remind",
     remindTestEmail: "/api/v1/user/settings/remind/test-email",

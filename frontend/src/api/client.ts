@@ -2,10 +2,10 @@
  * API通信の共通エンジン
  */
 
- /*
-  * フロントへのレスポンスの形を整えるところであり、
-  * メッセージも含めて返信を行う
-  */
+/*
+ * フロントへのレスポンスの形を整えるところであり、
+ * メッセージも含めて返信を行う
+ */
 
 import { getAccessToken, removeAccessToken } from "../lib/auth";
 
@@ -29,6 +29,7 @@ async function parseResponse<T>(response: Response): Promise<T> {
   if (contentType && contentType.includes("application/json")) {
     return (await response.json()) as T;
   }
+
   return {} as T;
 }
 
@@ -36,17 +37,32 @@ export async function apiClient<T>(
   path: string,
   options: ApiClientOptions = {}
 ): Promise<T> {
-  const { auth = true, headers, ...restOptions } = options;
+  const { auth = true, headers, body, ...restOptions } = options;
 
   const token = auth ? getAccessToken() : null;
+  const isFormData = body instanceof FormData;
+
+  const requestHeaders: Record<string, string> = {};
+
+  if (!isFormData) {
+    requestHeaders["Content-Type"] = "application/json";
+  }
+
+  if (token) {
+    requestHeaders.Authorization = `Bearer ${token}`;
+  }
+
+  if (headers) {
+    const extraHeaders = new Headers(headers);
+    extraHeaders.forEach((value, key) => {
+      requestHeaders[key] = value;
+    });
+  }
 
   const response = await fetch(`${BASE_URL}${path}`, {
     ...restOptions,
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...(headers ?? {}),
-    },
+    body,
+    headers: requestHeaders,
     cache: "no-store",
   });
 

@@ -15,6 +15,7 @@ export type CareTemplate = {
   templateType: CareTemplateType;
   name: string;
   imageKey: string;
+  imageUrl: string;
   items: CareTemplateItem[];
   isFixed: boolean;
   fixedDaysOfWeek: string[];

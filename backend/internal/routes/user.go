@@ -44,6 +44,10 @@ func RegisterUserRoutes(rg *gin.RouterGroup) {
 	)
 	careTemplateHandler := userHandlers.NewCareTemplateHandler(careTemplateService)
 
+	// 画像アップロード
+	imageService := userServices.NewImageService()
+	imageHandler := userHandlers.NewImageHandler(imageService)
+
 	user := rg.Group("/user")
 	user.Use(
 		authMiddlewares.AuthMiddleware(),
@@ -51,6 +55,9 @@ func RegisterUserRoutes(rg *gin.RouterGroup) {
 	{
 		// マイページ
 		user.GET("/mypage", userHandler.GetMyPage)
+
+		// 画像アップロード
+		user.POST("/images", imageHandler.UploadImage)
 
 		// リマインド設定
 		user.GET("/settings/remind", userSettingHandler.GetRemindSetting)

@@ -2,6 +2,7 @@ package services
 
 import (
 	"errors"
+	"os"
 	"strings"
 
 	"withpet/backend/internal/models"
@@ -162,6 +163,7 @@ func toCareTemplateResponse(template models.CareTemplate) types.CareTemplateResp
 		TemplateType:    template.TemplateType,
 		Name:            template.Name,
 		ImageKey:        template.ImageKey,
+		ImageURL:        buildImageURL(template.ImageKey),
 		Items:           items,
 		IsFixed:         template.IsFixed,
 		FixedDaysOfWeek: splitFixedDays(template.FixedDaysOfWeek),
@@ -203,4 +205,20 @@ func splitFixedDays(daysText string) []string {
 	}
 
 	return strings.Split(daysText, ",")
+}
+
+/*
+ * 画像キーから表示用URLへ変換
+ */
+func buildImageURL(imageKey string) string {
+	if imageKey == "" {
+		return ""
+	}
+
+	cloudFrontDomain := strings.TrimRight(os.Getenv("CLOUDFRONT_DOMAIN"), "/")
+	if cloudFrontDomain == "" {
+		return ""
+	}
+
+	return cloudFrontDomain + "/" + imageKey
 }

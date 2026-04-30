@@ -9,6 +9,7 @@ import {
   getCareTemplates,
   getMyPage,
   updateCareTemplate,
+  uploadUserImage,
 } from "@/api/user";
 import { extractData } from "@/api/data";
 import type { MyPageData, MyPagePet } from "@/types/user/user_type";
@@ -132,6 +133,9 @@ export default function UserCareTemplatesPage() {
   const [pageMessage, setPageMessage] = useState("");
   const [formMessage, setFormMessage] = useState("");
 
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [imagePreviewUrl, setImagePreviewUrl] = useState("");
+
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingTemplateId, setEditingTemplateId] = useState<number | null>(null);
   const [form, setForm] = useState<CareTemplateForm>(() => createInitialForm("FOOD"));
@@ -199,6 +203,7 @@ export default function UserCareTemplatesPage() {
   function handleOpenCreateForm() {
     setEditingTemplateId(null);
     setForm(createInitialForm(selectedType));
+    setImagePreviewUrl("");
     setFormMessage("");
     setIsFormOpen(true);
   }
@@ -206,6 +211,7 @@ export default function UserCareTemplatesPage() {
   function handleEditTemplate(template: CareTemplate) {
     setEditingTemplateId(template.id);
     setForm(createFormFromTemplate(template));
+    setImagePreviewUrl(template.imageUrl ?? "");
     setFormMessage("");
     setIsFormOpen(true);
   }
@@ -214,6 +220,7 @@ export default function UserCareTemplatesPage() {
     setEditingTemplateId(null);
     setIsFormOpen(false);
     setFormMessage("");
+    setImagePreviewUrl("");
     setForm(createInitialForm(selectedType));
   }
 
@@ -291,6 +298,36 @@ export default function UserCareTemplatesPage() {
           : [...prev.fixedDaysOfWeek, value],
       };
     });
+  }
+
+  async function handleUploadImage(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    setFormMessage("");
+
+    try {
+      setIsUploadingImage(true);
+
+      const result = await uploadUserImage(file);
+      const data = extractData(result);
+
+      setForm((prev) => ({
+        ...prev,
+        imageKey: data.imageKey,
+      }));
+
+      setImagePreviewUrl(data.imageUrl);
+      setFormMessage("画像をアップロードしました。");
+    } catch (err) {
+      console.error(err);
+      setFormMessage("画像のアップロードに失敗しました。");
+    } finally {
+      setIsUploadingImage(false);
+    }
   }
 
   function validateForm() {
@@ -471,7 +508,7 @@ export default function UserCareTemplatesPage() {
                       key={type}
                       type="button"
                       onClick={() => handleChangeType(type)}
-                      style={isActive ? { border: "1px solid #e5e7eb", borderRadius: "999px", backgroundColor: "#fff7ed", color: "#9a3412", fontWeight: "700", cursor: "pointer", padding: "8px 16px", fontSize: "14px", borderColor: "#f97316" } : { border: "1px solid #e5e7eb", borderRadius: "999px", backgroundColor: "#ffffff", color: "#374151", fontWeight: "700", cursor: "pointer", padding: "8px 16px", fontSize: "14px" }}
+                      style={isActive ? { border: "1px solid #f97316", borderRadius: "999px", backgroundColor: "#fff7ed", color: "#9a3412", fontWeight: "700", cursor: "pointer", padding: "8px 16px", fontSize: "14px" } : { border: "1px solid #e5e7eb", borderRadius: "999px", backgroundColor: "#ffffff", color: "#374151", fontWeight: "700", cursor: "pointer", padding: "8px 16px", fontSize: "14px" }}
                     >
                       {TEMPLATE_TYPE_LABELS[type]}
                     </button>
@@ -556,8 +593,18 @@ export default function UserCareTemplatesPage() {
                       ))}
                     </div>
 
+                    {template.imageUrl && (
+                      <div style={{ marginTop: "12px" }}>
+                        <img
+                          src={template.imageUrl}
+                          alt={`${template.name}の画像`}
+                          style={{ width: "120px", height: "120px", objectFit: "cover", borderRadius: "12px", border: "1px solid #e5e7eb" }}
+                        />
+                      </div>
+                    )}
+
                     {template.imageKey && (
-                      <p style={{ margin: "12px 0 0", fontSize: "12px", color: "#6b7280" }}>
+                      <p style={{ margin: "8px 0 0", fontSize: "12px", color: "#6b7280", wordBreak: "break-all" }}>
                         画像キー：{template.imageKey}
                       </p>
                     )}
@@ -619,18 +666,40 @@ export default function UserCareTemplatesPage() {
                 </div>
 
                 <div>
-                  <label htmlFor="imageKey" style={{ display: "block", marginBottom: "8px", fontSize: "14px", fontWeight: "700", color: "#374151" }}>
-                    画像キー
+                  <label htmlFor="templateImage" style={{ display: "block", marginBottom: "8px", fontSize: "14px", fontWeight: "700", color: "#374151" }}>
+                    画像
                   </label>
+
                   <input
-                    id="imageKey"
-                    value={form.imageKey}
-                    onChange={(e) =>
-                      setForm((prev) => ({ ...prev, imageKey: e.target.value }))
-                    }
-                    placeholder="S3連携前なので仮入力欄"
+                    id="templateImage"
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    onChange={handleUploadImage}
+                    disabled={isUploadingImage}
                     style={{ width: "100%", boxSizing: "border-box", border: "1px solid #d1d5db", borderRadius: "8px", padding: "10px 12px", backgroundColor: "#ffffff", color: "#111827", fontSize: "14px" }}
                   />
+
+                  {isUploadingImage && (
+                    <p style={{ margin: "8px 0 0", fontSize: "13px", color: "#6b7280", fontWeight: "700" }}>
+                      画像をアップロード中です...
+                    </p>
+                  )}
+
+                  {imagePreviewUrl && (
+                    <div style={{ marginTop: "12px" }}>
+                      <img
+                        src={imagePreviewUrl}
+                        alt="アップロード画像プレビュー"
+                        style={{ width: "160px", height: "160px", objectFit: "cover", borderRadius: "12px", border: "1px solid #e5e7eb" }}
+                      />
+                    </div>
+                  )}
+
+                  {form.imageKey && (
+                    <p style={{ margin: "8px 0 0", fontSize: "12px", color: "#6b7280", wordBreak: "break-all" }}>
+                      画像キー：{form.imageKey}
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -731,7 +800,7 @@ export default function UserCareTemplatesPage() {
                                 key={day.value}
                                 type="button"
                                 onClick={() => handleToggleWeekday(day.value)}
-                                style={isChecked ? { border: "1px solid #e5e7eb", borderRadius: "999px", backgroundColor: "#fff7ed", color: "#9a3412", fontWeight: "700", cursor: "pointer", padding: "7px 12px", fontSize: "13px", borderColor: "#f97316" } : { border: "1px solid #e5e7eb", borderRadius: "999px", backgroundColor: "#ffffff", color: "#374151", fontWeight: "700", cursor: "pointer", padding: "7px 12px", fontSize: "13px" }}
+                                style={isChecked ? { border: "1px solid #f97316", borderRadius: "999px", backgroundColor: "#fff7ed", color: "#9a3412", fontWeight: "700", cursor: "pointer", padding: "7px 12px", fontSize: "13px" } : { border: "1px solid #e5e7eb", borderRadius: "999px", backgroundColor: "#ffffff", color: "#374151", fontWeight: "700", cursor: "pointer", padding: "7px 12px", fontSize: "13px" }}
                               >
                                 {day.label}
                               </button>
@@ -791,7 +860,7 @@ export default function UserCareTemplatesPage() {
                     type="button"
                     onClick={handleSave}
                     style={{ border: "none", borderRadius: "8px", padding: "10px 16px", backgroundColor: "#f97316", color: "#ffffff", fontSize: "14px", fontWeight: "700", cursor: "pointer" }}
-                    disabled={isSaving}
+                    disabled={isSaving || isUploadingImage}
                   >
                     {isSaving ? "保存中..." : "保存する"}
                   </button>

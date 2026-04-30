@@ -11,9 +11,10 @@ func Migrate() {
 		&models.User{},
 		&models.Pet{},
 		&models.UserSetting{},
-		&models.MealTemplate{},
-		&models.MealTemplatePeriod{},
-		&models.MealDailyLog{},
+		&models.PetEvent{},
+		&models.PetEventItem{},
+		&models.CareTemplate{},
+		&models.CareTemplateItem{},
 	)
 	if err != nil {
 		log.Fatal("failed to migrate database: ", err)
