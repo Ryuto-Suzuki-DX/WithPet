@@ -70,6 +70,19 @@ func (r *UserRepository) CreateUser(user *models.User) error {
 	return nil
 }
 
+// 詳細取得
+func (r *UserRepository) FindUserByID(id uint) (*models.User, error) {
+	var user models.User
+
+	if err := database.DB.
+		Where("id = ? AND is_deleted = ?", id, false).
+		First(&user).Error; err != nil {
+		return nil, err
+	}
+
+	return &user, nil
+}
+
 // 編集
 func (r *UserRepository) UpdateUser(query *gorm.DB) error {
 	if query.Error != nil {

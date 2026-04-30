@@ -1,538 +1,165 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Menu, ChevronLeft, ChevronRight } from "lucide-react";
-import SideMenu from "@/app/user/sideMenu/sideMenu";
-
-type Pet = {
-  id: number;
-  name: string;
-  type: string;
-  birthDate: string;
-  sex: string;
-};
-
-type CalendarCell = {
-  date: Date;
-  dayNumber: number;
-  isCurrentMonth: boolean;
-};
-
-type WeekStartsOn = "sunday" | "monday";
-
-const mockPets: Pet[] = [
-  {
-    id: 1,
-    name: "もも",
-    type: "フェレット",
-    birthDate: "2023-05-01",
-    sex: "メス",
-  },
-  {
-    id: 2,
-    name: "レオ",
-    type: "猫",
-    birthDate: "2022-08-15",
-    sex: "オス",
-  },
-  {
-    id: 3,
-    name: "ココ",
-    type: "犬",
-    birthDate: "2021-11-20",
-    sex: "メス",
-  },
-];
-
-const WEEK_LABELS = {
-  sunday: ["日", "月", "火", "水", "木", "金", "土"],
-  monday: ["月", "火", "水", "木", "金", "土", "日"],
-};
-
-function formatMonthLabel(date: Date) {
-  return `${date.getFullYear()}年${date.getMonth() + 1}月`;
-}
-
-function formatBirthDate(dateString: string) {
-  const date = new Date(dateString);
-
-  if (Number.isNaN(date.getTime())) {
-    return "-";
-  }
-
-  const year = date.getFullYear();
-  const month = `${date.getMonth() + 1}`.padStart(2, "0");
-  const day = `${date.getDate()}`.padStart(2, "0");
-
-  return `${year}/${month}/${day}`;
-}
-
-function calculateAge(dateString: string) {
-  const birthDate = new Date(dateString);
-  const today = new Date();
-
-  if (Number.isNaN(birthDate.getTime())) {
-    return "-";
-  }
-
-  let age = today.getFullYear() - birthDate.getFullYear();
-  const hasNotHadBirthdayYet =
-    today.getMonth() < birthDate.getMonth() ||
-    (today.getMonth() === birthDate.getMonth() && today.getDate() < birthDate.getDate());
-
-  if (hasNotHadBirthdayYet) {
-    age -= 1;
-  }
-
-  return `${age}歳`;
-}
-
-function createCalendarCells(baseDate: Date, weekStartsOn: WeekStartsOn): CalendarCell[] {
-  const year = baseDate.getFullYear();
-  const month = baseDate.getMonth();
-
-  const firstDayOfMonth = new Date(year, month, 1);
-  const startDay = firstDayOfMonth.getDay();
-
-  const offset = weekStartsOn === "monday"
-    ? (startDay + 6) % 7
-    : startDay;
-
-  const calendarStartDate = new Date(year, month, 1 - offset);
-
-  return Array.from({ length: 42 }, (_, index) => {
-    const date = new Date(calendarStartDate);
-    date.setDate(calendarStartDate.getDate() + index);
-
-    return {
-      date,
-      dayNumber: date.getDate(),
-      isCurrentMonth: date.getMonth() === month,
-    };
-  });
-}
+import { Menu } from "lucide-react";
+import { getMyPage } from "@/api/user";
+import { extractData } from "@/api/data";
+import type { MyPageData, MyPagePet, MyPageUser } from "@/types/user/user_type";
+import SideMenu from "../sideMenu/sideMenu";
 
 export default function UserMyPage() {
   const router = useRouter();
 
+  const [user, setUser] = useState<MyPageUser | null>(null);
+  const [pets, setPets] = useState<MyPagePet[]>([]);
+
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [weekStartsOn] = useState<WeekStartsOn>("sunday");
 
-  const calendarCells = useMemo(
-    () => createCalendarCells(currentMonth, weekStartsOn),
-    [currentMonth, weekStartsOn]
-  );
+  // 初回ロード
+  useEffect(() => {
+    fetchMyPage();
+  }, []);
 
-  const weekLabels = WEEK_LABELS[weekStartsOn];
+  // マイページ取得
+  async function fetchMyPage() {
+    setIsLoading(true);
+    setError("");
 
-  function handleOpenMenu() {
-    setIsMenuOpen(true);
+    try {
+      const result = await getMyPage();
+      const data = extractData<MyPageData>(result);
+
+      setUser(data.user);
+      setPets(data.pets ?? []);
+    } catch (err) {
+      console.error(err);
+      setError("マイページ情報の取得に失敗しました。");
+    } finally {
+      setIsLoading(false);
+    }
   }
 
-  function handlePrevMonth() {
-    setCurrentMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
-  }
-
-  function handleNextMonth() {
-    setCurrentMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
-  }
-
-  function handlePetClick(petId: number) {
+  // ペット詳細へ遷移
+  function handlePetDetail(petId: number) {
     router.push(`/user/pets/${petId}`);
   }
 
   return (
     <>
       <SideMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
-
-      <main
-        style={{
-          minHeight: "100vh",
-          backgroundColor: "#f9fafb",
-          padding: "24px",
-        }}
-      >
-        <div
-          style={{
-            maxWidth: "1200px",
-            margin: "0 auto",
-            display: "flex",
-            flexDirection: "column",
-            gap: "24px",
-          }}
-        >
-          <section
-            style={{
-              backgroundColor: "#ffffff",
-              borderRadius: "12px",
-              padding: "24px",
-              boxShadow: "0 4px 12px rgba(0, 0, 0, 0.06)",
-              flexShrink: 0,
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                gap: "16px",
-                flexWrap: "wrap",
-              }}
-            >
+      <main style={{ height: "100vh", backgroundColor: "#f9fafb", padding: "24px", overflow: "hidden" }}>
+        <div style={{ maxWidth: "1000px", height: "100%", margin: "0 auto", display: "flex", flexDirection: "column", gap: "24px" }}>
+          <section style={{ backgroundColor: "#ffffff", borderRadius: "12px", padding: "24px", boxShadow: "0 4px 12px rgba(0, 0, 0, 0.06)", flexShrink: 0 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "16px", flexWrap: "wrap" }}>
               <div>
-                <h1
-                  style={{
-                    margin: 0,
-                    fontSize: "24px",
-                    fontWeight: 700,
-                    color: "#111827",
-                  }}
-                >
+                <h1 style={{ margin: 0, fontSize: "24px", fontWeight: 700, color: "#111827" }}>
                   マイページ
                 </h1>
-                <p
-                  style={{
-                    margin: "8px 0 0 0",
-                    fontSize: "14px",
-                    color: "#6b7280",
-                  }}
-                >
-                  自分のペット情報とカレンダーを確認できます
+                <p style={{ margin: "8px 0 0 0", fontSize: "14px", color: "#6b7280" }}>
+                  自分の情報と登録済みのペットを確認できます
                 </p>
               </div>
 
-              <button
-                type="button"
-                onClick={handleOpenMenu}
-                aria-label="メニューを開く"
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  width: "42px",
-                  height: "42px",
-                  border: "none",
-                  borderRadius: "10px",
-                  backgroundColor: "#fed7aa",
-                  color: "#9a3412",
-                  cursor: "pointer",
-                }}
-              >
+              <button type="button" onClick={() => setIsMenuOpen(true)} aria-label="メニューを開く" style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "42px", height: "42px", border: "none", borderRadius: "10px", backgroundColor: "#fed7aa", color: "#9a3412", cursor: "pointer" }}>
                 <Menu size={22} />
               </button>
             </div>
           </section>
 
-          <section
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: "24px",
-            }}
-          >
-            <section
-              style={{
-                backgroundColor: "#ffffff",
-                borderRadius: "12px",
-                padding: "24px",
-                boxShadow: "0 4px 12px rgba(0, 0, 0, 0.06)",
-              }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  gap: "16px",
-                  marginBottom: "20px",
-                  flexWrap: "wrap",
-                }}
-              >
+          <section style={{ backgroundColor: "#ffffff", borderRadius: "12px", padding: "24px", boxShadow: "0 4px 12px rgba(0, 0, 0, 0.06)", flex: 1, overflowY: "auto", minHeight: 0 }}>
+            {error && (
+              <p style={{ margin: "0 0 16px 0", color: "#dc2626", fontSize: "14px", fontWeight: 700 }}>
+                {error}
+              </p>
+            )}
+
+            {isLoading ? (
+              <p style={{ margin: 0, fontSize: "14px", color: "#6b7280" }}>
+                読み込み中です...
+              </p>
+            ) : !user ? (
+              <p style={{ margin: 0, fontSize: "14px", color: "#6b7280" }}>
+                ユーザー情報がありません。
+              </p>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
                 <div>
-                  <h2
-                    style={{
-                      margin: 0,
-                      fontSize: "20px",
-                      fontWeight: 700,
-                      color: "#111827",
-                    }}
-                  >
+                  <h2 style={{ margin: 0, fontSize: "18px", fontWeight: 700, color: "#111827" }}>
+                    ユーザー情報
+                  </h2>
+
+                  <div style={{ marginTop: "16px", display: "grid", gridTemplateColumns: "160px 1fr", border: "1px solid #e5e7eb", borderRadius: "10px", overflow: "hidden" }}>
+                    <div style={{ padding: "12px", backgroundColor: "#f3f4f6", fontSize: "14px", fontWeight: 700, color: "#374151", borderBottom: "1px solid #e5e7eb" }}>
+                      ユーザーID
+                    </div>
+                    <div style={{ padding: "12px", fontSize: "14px", color: "#111827", borderBottom: "1px solid #e5e7eb" }}>
+                      {user.id}
+                    </div>
+
+                    <div style={{ padding: "12px", backgroundColor: "#f3f4f6", fontSize: "14px", fontWeight: 700, color: "#374151", borderBottom: "1px solid #e5e7eb" }}>
+                      名前
+                    </div>
+                    <div style={{ padding: "12px", fontSize: "14px", color: "#111827", borderBottom: "1px solid #e5e7eb" }}>
+                      {user.name}
+                    </div>
+
+                    <div style={{ padding: "12px", backgroundColor: "#f3f4f6", fontSize: "14px", fontWeight: 700, color: "#374151", borderBottom: "1px solid #e5e7eb" }}>
+                      メールアドレス
+                    </div>
+                    <div style={{ padding: "12px", fontSize: "14px", color: "#111827", borderBottom: "1px solid #e5e7eb" }}>
+                      {user.email}
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ borderTop: "1px solid #e5e7eb", paddingTop: "24px" }}>
+                  <h2 style={{ margin: 0, fontSize: "18px", fontWeight: 700, color: "#111827" }}>
                     自分のペット
                   </h2>
-                  <p
-                    style={{
-                      margin: "8px 0 0 0",
-                      fontSize: "14px",
-                      color: "#6b7280",
-                    }}
-                  >
-                    ペットをクリックすると詳細画面へ進みます
-                  </p>
-                </div>
-              </div>
 
-              {mockPets.length === 0 ? (
-                <p
-                  style={{
-                    margin: 0,
-                    fontSize: "14px",
-                    color: "#6b7280",
-                  }}
-                >
-                  登録されているペットはありません。
-                </p>
-              ) : (
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "12px",
-                  }}
-                >
-                  {mockPets.map((pet) => (
-                    <button
-                      key={pet.id}
-                      type="button"
-                      onClick={() => handlePetClick(pet.id)}
-                      style={{
-                        width: "100%",
-                        border: "1px solid #e5e7eb",
-                        borderRadius: "12px",
-                        padding: "16px",
-                        backgroundColor: "#ffffff",
-                        textAlign: "left",
-                        cursor: "pointer",
-                        boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)",
-                      }}
-                    >
-                      <div
-                        style={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "center",
-                          gap: "12px",
-                          marginBottom: "12px",
-                          flexWrap: "wrap",
-                        }}
-                      >
-                        <h3
-                          style={{
-                            margin: 0,
-                            fontSize: "18px",
-                            fontWeight: 700,
-                            color: "#111827",
-                          }}
-                        >
-                          {pet.name}
-                        </h3>
+                  {pets.length === 0 ? (
+                    <p style={{ margin: "12px 0 0 0", fontSize: "14px", color: "#6b7280" }}>
+                      登録されているペットはいません。
+                    </p>
+                  ) : (
+                    <div style={{ marginTop: "12px", overflowX: "auto" }}>
+                      <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "640px" }}>
+                        <thead>
+                          <tr style={{ backgroundColor: "#f3f4f6" }}>
+                            <th style={{ textAlign: "left", padding: "12px", fontSize: "14px", fontWeight: 700, color: "#374151", borderBottom: "1px solid #e5e7eb" }}>名前</th>
+                            <th style={{ textAlign: "left", padding: "12px", fontSize: "14px", fontWeight: 700, color: "#374151", borderBottom: "1px solid #e5e7eb" }}>種別</th>
+                            <th style={{ textAlign: "left", padding: "12px", fontSize: "14px", fontWeight: 700, color: "#374151", borderBottom: "1px solid #e5e7eb" }}>性別</th>
+                            <th style={{ textAlign: "left", padding: "12px", fontSize: "14px", fontWeight: 700, color: "#374151", borderBottom: "1px solid #e5e7eb" }}>誕生日</th>
+                          </tr>
+                        </thead>
 
-                        <span
-                          style={{
-                            display: "inline-block",
-                            borderRadius: "999px",
-                            padding: "6px 10px",
-                            backgroundColor: "#ffedd5",
-                            color: "#9a3412",
-                            fontSize: "12px",
-                            fontWeight: 700,
-                          }}
-                        >
-                          {pet.type}
-                        </span>
-                      </div>
-
-                      <div
-                        style={{
-                          display: "grid",
-                          gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-                          gap: "10px 16px",
-                          fontSize: "14px",
-                          color: "#374151",
-                        }}
-                      >
-                        <div>
-                          <span style={{ fontWeight: 700 }}>誕生日：</span>
-                          {formatBirthDate(pet.birthDate)}
-                        </div>
-                        <div>
-                          <span style={{ fontWeight: 700 }}>年齢：</span>
-                          {calculateAge(pet.birthDate)}
-                        </div>
-                        <div>
-                          <span style={{ fontWeight: 700 }}>性別：</span>
-                          {pet.sex}
-                        </div>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </section>
-
-            <section
-              style={{
-                backgroundColor: "#ffffff",
-                borderRadius: "12px",
-                padding: "24px",
-                boxShadow: "0 4px 12px rgba(0, 0, 0, 0.06)",
-              }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  gap: "16px",
-                  marginBottom: "20px",
-                  flexWrap: "wrap",
-                }}
-              >
-                <div>
-                  <h2
-                    style={{
-                      margin: 0,
-                      fontSize: "20px",
-                      fontWeight: 700,
-                      color: "#111827",
-                    }}
-                  >
-                    カレンダー
-                  </h2>
-                  <p
-                    style={{
-                      margin: "8px 0 0 0",
-                      fontSize: "14px",
-                      color: "#6b7280",
-                    }}
-                  >
-                    今後、日付クリックや曜日開始設定を拡張できる構成です
-                  </p>
-                </div>
-
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "8px",
-                  }}
-                >
-                  <button
-                    type="button"
-                    onClick={handlePrevMonth}
-                    aria-label="前の月へ"
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      width: "38px",
-                      height: "38px",
-                      border: "none",
-                      borderRadius: "8px",
-                      backgroundColor: "#f3f4f6",
-                      color: "#374151",
-                      cursor: "pointer",
-                    }}
-                  >
-                    <ChevronLeft size={20} />
-                  </button>
-
-                  <div
-                    style={{
-                      minWidth: "120px",
-                      textAlign: "center",
-                      fontSize: "16px",
-                      fontWeight: 700,
-                      color: "#111827",
-                    }}
-                  >
-                    {formatMonthLabel(currentMonth)}
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={handleNextMonth}
-                    aria-label="次の月へ"
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      width: "38px",
-                      height: "38px",
-                      border: "none",
-                      borderRadius: "8px",
-                      backgroundColor: "#f3f4f6",
-                      color: "#374151",
-                      cursor: "pointer",
-                    }}
-                  >
-                    <ChevronRight size={20} />
-                  </button>
-                </div>
-              </div>
-
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(7, minmax(0, 1fr))",
-                  gap: "8px",
-                  marginBottom: "8px",
-                }}
-              >
-                {weekLabels.map((label) => (
-                  <div
-                    key={label}
-                    style={{
-                      textAlign: "center",
-                      fontSize: "13px",
-                      fontWeight: 700,
-                      color: "#6b7280",
-                      padding: "8px 0",
-                    }}
-                  >
-                    {label}
-                  </div>
-                ))}
-              </div>
-
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(7, minmax(0, 1fr))",
-                  gap: "8px",
-                }}
-              >
-                {calendarCells.map((cell, index) => {
-                  const isToday = new Date().toDateString() === cell.date.toDateString();
-
-                  return (
-                    <div
-                      key={`${cell.date.toDateString()}-${index}`}
-                      style={{
-                        minHeight: "72px",
-                        border: "1px solid #e5e7eb",
-                        borderRadius: "10px",
-                        padding: "10px",
-                        backgroundColor: cell.isCurrentMonth ? "#ffffff" : "#f9fafb",
-                        color: cell.isCurrentMonth ? "#111827" : "#9ca3af",
-                        boxShadow: isToday ? "inset 0 0 0 2px #f97316" : "none",
-                      }}
-                    >
-                      <div
-                        style={{
-                          fontSize: "14px",
-                          fontWeight: isToday ? 700 : 500,
-                          color: isToday ? "#ea580c" : "inherit",
-                        }}
-                      >
-                        {cell.dayNumber}
-                      </div>
+                        <tbody>
+                          {pets.map((pet) => (
+                            <tr key={pet.id} onClick={() => handlePetDetail(pet.id)} style={{ backgroundColor: "#ffffff", cursor: "pointer" }}>
+                              <td style={{ padding: "12px", fontSize: "14px", color: "#111827", borderBottom: "1px solid #e5e7eb" }}>
+                                {pet.name}
+                              </td>
+                              <td style={{ padding: "12px", fontSize: "14px", color: "#111827", borderBottom: "1px solid #e5e7eb" }}>
+                                {pet.type}
+                              </td>
+                              <td style={{ padding: "12px", fontSize: "14px", color: "#111827", borderBottom: "1px solid #e5e7eb" }}>
+                                {pet.sex || "-"}
+                              </td>
+                              <td style={{ padding: "12px", fontSize: "14px", color: "#111827", borderBottom: "1px solid #e5e7eb" }}>
+                                {pet.birthDate || "-"}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
                     </div>
-                  );
-                })}
+                  )}
+                </div>
               </div>
-            </section>
+            )}
           </section>
         </div>
       </main>

@@ -65,13 +65,35 @@ export async function createUser(
 }
 
 /*
+ * 〇1件取得
+ */
+export async function getUser(
+  userId: number
+): Promise<ApiResponse<User>> {
+  return apiClient<ApiResponse<User>>(`${ENDPOINTS.admin.users}/${userId}`, {
+    method: "GET",
+  });
+}                                                                                                               
+
+/*
  * 〇編集
  */
-export async function editUser(
+export async function updateUser(
   params: UpdateUserRequest
 ): Promise<void> {
-   await apiClient(ENDPOINTS.admin.users, {
-    method: "POST",
+  await apiClient(`${ENDPOINTS.admin.users}/${params.ID}`, {
+    method: "PUT",
     body: JSON.stringify(params),
-   })
+  });
+}
+
+/*
+ * 〇削除
+ */
+export async function deleteUser(
+  userId: number
+): Promise<void> {
+  await apiClient(`${ENDPOINTS.admin.users}/${userId}`, {
+    method: "DELETE",
+  });
 }

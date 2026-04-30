@@ -27,6 +27,7 @@ func SetupRouter() *gin.Engine {
 	{
 		RegisterAuthRoutes(api)
 		RegisterAdminRoutes(api)
+		RegisterUserRoutes(api)
 	}
 
 	return r

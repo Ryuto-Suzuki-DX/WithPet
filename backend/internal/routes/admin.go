@@ -17,8 +17,9 @@ import (
 func RegisterAdminRoutes(rg *gin.RouterGroup) {
 	// 依存関係を組み立てる
 	userRepository := adminRepositories.NewUserRepository()
+	petRepository := adminRepositories.NewPetRepository()
 	userBuilder := adminBuilder.NewUserBuilder()
-	userService := adminServices.NewUserService(userRepository, userBuilder)
+	userService := adminServices.NewUserService(userRepository, petRepository, userBuilder)
 	userHandler := adminHandlers.NewUserHandler(userService)
 
 	admin := rg.Group("/admin")
@@ -32,9 +33,11 @@ func RegisterAdminRoutes(rg *gin.RouterGroup) {
 		admin.GET("/users", userHandler.SearchUsers)
 		// 新規作成
 		admin.POST("/users", userHandler.CreateUser)
+		// 詳細取得
+		admin.GET("/users/:id", userHandler.GetUser)
 		// 編集
-		admin.POST("/users/edit", userHandler.UpdateUser)
+		admin.PUT("/users/:id", userHandler.UpdateUser)
 		// 削除
-		admin.POST("/users/delete", userHandler.DeleteUser)
+		admin.DELETE("/users/:id", userHandler.DeleteUser)
 	}
 }

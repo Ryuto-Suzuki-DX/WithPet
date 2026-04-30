@@ -42,3 +42,14 @@ export function extractSearchListData<T>(
     hasMore: response.data.hasMore,
   };
 }
+
+// 単体取得APIの戻り値専用タイプ
+export function extractData<T>(
+  response: ApiResponse<T>
+): T {
+  if (response.error) {
+    throw new Error(response.message || "ユーザー取得時にAPIエラーが発生しました。");
+  }
+
+  return response.data;
+}

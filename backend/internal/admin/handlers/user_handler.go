@@ -21,6 +21,7 @@ package handlers
 
 import (
 	"net/http"
+	"strconv"
 
 	"withpet/backend/internal/admin/services"
 	"withpet/backend/internal/admin/types"
@@ -109,6 +110,23 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
 	respondSuccess(c, http.StatusCreated, user, "ユーザーの作成に成功しました。")
 }
 
+// 詳細取得
+func (h *UserHandler) GetUser(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		respondBadRequest(c, "INVALID_ID_REQUEST", err)
+		return
+	}
+
+	user, err := h.userService.GetUser(uint(id))
+	if err != nil {
+		respondError(c, http.StatusInternalServerError, "GET_USER_FAILED", err)
+		return
+	}
+
+	respondSuccess(c, http.StatusOK, user, "ユーザーの取得に成功しました。")
+}
+
 // 編集
 func (h *UserHandler) UpdateUser(c *gin.Context) {
 	var req types.UpdateUserRequest
@@ -131,12 +149,14 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 
 // 削除
 func (h *UserHandler) DeleteUser(c *gin.Context) {
-	var req types.DeleteUserRequest
-
-	// リクエストJSONを受け取る
-	if err := c.ShouldBindJSON(&req); err != nil {
-		respondBadRequest(c, "INVALID_ID_REQUEST", err)
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		respondBadRequest(c, "INVAID_ID_REQUEST", err)
 		return
+	}
+
+	req := types.DeleteUserRequest{
+		ID: uint(id),
 	}
 
 	// 削除実行

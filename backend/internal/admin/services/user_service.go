@@ -22,15 +22,18 @@ type UserServiceInterface interface {
 
 type UserService struct {
 	userRepository *repositories.UserRepository
+	petRepository  *repositories.PetRepository
 	userBuilder    *builder.UserBuilder
 }
 
 func NewUserService(
 	userRepository *repositories.UserRepository,
+	petRepository *repositories.PetRepository,
 	userBuilder *builder.UserBuilder,
 ) *UserService {
 	return &UserService{
 		userRepository: userRepository,
+		petRepository:  petRepository,
 		userBuilder:    userBuilder,
 	}
 }
@@ -97,7 +100,7 @@ func (s *UserService) SearchUsers(req types.SearchUsersRequest) (types.SearchUse
 
 // 新規作成
 func (s *UserService) CreateUser(req types.CreateUserRequest) (types.UserResponse, error) {
-	// メアド重複チェッククエリ作成(メアドでユーザーを検索するクエリ作成)
+	// メアド重複チェッククエリ作成(メアドでユーザーを検索するクエリ作成) ※削除済みを除外する
 	query, err := s.userBuilder.BuildFindUserByEmailQuery(req.Email)
 	if err != nil {
 		return types.UserResponse{}, err
@@ -138,6 +141,47 @@ func (s *UserService) CreateUser(req types.CreateUserRequest) (types.UserRespons
 
 	return response, nil
 
+}
+
+// 詳細取得
+func (s *UserService) GetUser(id uint) (*types.UserResponse, error) {
+	user, err := s.userRepository.FindUserByID(id)
+	if err != nil {
+		return nil, err
+	}
+
+	// ユーザーのペット情報を取得
+	pets, err := s.petRepository.FindPetsByUserID(id)
+	if err != nil {
+		return nil, err
+	}
+
+	// ペット情報をレスポンス型に変換
+	petResponses := make([]types.PetResponse, 0, len(pets))
+	for _, pet := range pets {
+		petResponses = append(petResponses, types.PetResponse{
+			ID:        pet.ID,
+			UserID:    pet.UserID,
+			Name:      pet.Name,
+			Type:      pet.Type,
+			Sex:       pet.Sex,
+			BirthDate: pet.BirthDate.Format("2006-01-02"),
+			IsDeleted: pet.IsDeleted,
+			CreatedAt: pet.CreatedAt.Format("2006-01-02"),
+		})
+	}
+
+	// ユーザー情報　＋　ペット情報を返却
+	response := types.UserResponse{
+		ID:        user.ID,
+		Name:      user.Name,
+		Email:     user.Email,
+		Role:      user.Role,
+		IsDeleted: user.IsDeleted,
+		Pets:      petResponses,
+	}
+
+	return &response, nil
 }
 
 // 編集

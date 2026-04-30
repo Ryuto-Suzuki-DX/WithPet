@@ -54,6 +54,8 @@ export default function UserSearchForm({
             padding: "0 12px",
             fontSize: "14px",
             outline: "none",
+            color: "#111827",
+            backgroundColor: "#ffffff",
           }}
         />
       </div>

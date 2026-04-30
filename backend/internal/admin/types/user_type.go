@@ -10,13 +10,15 @@ package types
 
 //一覧表示(管理者画面の為、isdeletedも返す)
 type UserResponse struct {
-	ID        uint   `json:"id"`
-	Name      string `json:"name"`
-	Email     string `json:"email"`
-	Role      string `json:"role"`
-	IsDeleted bool   `json:"isDeleted"`
+	ID        uint          `json:"id"`
+	Name      string        `json:"name"`
+	Email     string        `json:"email"`
+	Role      string        `json:"role"`
+	IsDeleted bool          `json:"isDeleted"`
+	Pets      []PetResponse `json:"pets, omitempty"`
 }
 
+// 検索用
 type SearchUsersResponse struct {
 	Users   []UserResponse `json:"users"`
 	HasMore bool           `json:"hasMore"`
@@ -51,7 +53,7 @@ type UpdateUserRequest struct {
 
 // 削除
 type DeleteUserRequest struct {
-	ID uint `json:"id" bindin:"required`
+	ID uint `json:"id" binding:"required`
 }
 
 /*

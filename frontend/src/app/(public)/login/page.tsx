@@ -45,7 +45,7 @@ export default function LoginPage() {
             }
 
             // 一般ユーザーの場合、マイページへ遷移
-            router.push("/my-page")
+            router.push("/user/mypage")
         } catch {
             // errorは useAuthから提供されるエラーを表示
         }

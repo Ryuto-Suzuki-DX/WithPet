@@ -21,7 +21,7 @@ export default function SideMenu({ isOpen, onClose }: SideMenuProps) {
         style={{ position: "fixed", top: 0, right: isOpen ? 0 : "-320px", width: "320px", height: "100vh", backgroundColor: "#ffedd5", boxShadow: "-4px 0 16px rgba(0, 0, 0, 0.12)", zIndex: 1002, transition: "right 0.3s ease", padding: "24px 20px", display: "flex", flexDirection: "column", gap: "12px" }}
       >
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
-          <h2 style={{ margin: 0, fontSize: "20px", fontWeight: 700, color: "#9a3412" }}>Admin Menu</h2>
+          <h2 style={{ margin: 0, fontSize: "20px", fontWeight: 700, color: "#9a3412" }}>User Menu</h2>
 
           <button
             type="button"
@@ -32,20 +32,44 @@ export default function SideMenu({ isOpen, onClose }: SideMenuProps) {
           </button>
         </div>
 
-        <Link href="/admin/users" onClick={onClose} style={{ display: "block", padding: "12px 14px", borderRadius: "10px", backgroundColor: "#ffffff", color: "#7c2d12", textDecoration: "none", fontWeight: 700 }}>
-          ユーザー一覧
+        <Link href="/user/mypage" onClick={onClose} style={{ display: "block", padding: "12px 14px", borderRadius: "10px", backgroundColor: "#ffffff", color: "#7c2d12", textDecoration: "none", fontWeight: 700 }}>
+          マイページ
         </Link>
 
-        <Link href="/admin/users/new" onClick={onClose} style={{ display: "block", padding: "12px 14px", borderRadius: "10px", backgroundColor: "#ffffff", color: "#7c2d12", textDecoration: "none", fontWeight: 700 }}>
-          ユーザー新規作成
-        </Link>
-
-        <Link href="/admin/pets" onClick={onClose} style={{ display: "block", padding: "12px 14px", borderRadius: "10px", backgroundColor: "#ffffff", color: "#7c2d12", textDecoration: "none", fontWeight: 700 }}>
+        <Link href="/user/pets" onClick={onClose} style={{ display: "block", padding: "12px 14px", borderRadius: "10px", backgroundColor: "#ffffff", color: "#7c2d12", textDecoration: "none", fontWeight: 700 }}>
           ペット一覧
         </Link>
 
-        <Link href="/admin" onClick={onClose} style={{ display: "block", padding: "12px 14px", borderRadius: "10px", backgroundColor: "#ffffff", color: "#7c2d12", textDecoration: "none", fontWeight: 700 }}>
-          管理者トップ
+        <Link href="/user/pets/new" onClick={onClose} style={{ display: "block", padding: "12px 14px", borderRadius: "10px", backgroundColor: "#ffffff", color: "#7c2d12", textDecoration: "none", fontWeight: 700 }}>
+          ペット新規登録
+        </Link>
+
+        <Link href="/user/calendar" onClick={onClose} style={{ display: "block", padding: "12px 14px", borderRadius: "10px", backgroundColor: "#ffffff", color: "#7c2d12", textDecoration: "none", fontWeight: 700 }}>
+          カレンダー
+        </Link>
+
+        <Link href="/user/health" onClick={onClose} style={{ display: "block", padding: "12px 14px", borderRadius: "10px", backgroundColor: "#ffffff", color: "#7c2d12", textDecoration: "none", fontWeight: 700 }}>
+          体調メモ
+        </Link>
+
+        <Link href="/user/vaccines" onClick={onClose} style={{ display: "block", padding: "12px 14px", borderRadius: "10px", backgroundColor: "#ffffff", color: "#7c2d12", textDecoration: "none", fontWeight: 700 }}>
+          ワクチン管理
+        </Link>
+
+        <Link href="/user/foods" onClick={onClose} style={{ display: "block", padding: "12px 14px", borderRadius: "10px", backgroundColor: "#ffffff", color: "#7c2d12", textDecoration: "none", fontWeight: 700 }}>
+          食事・おやつ管理
+        </Link>
+
+        <Link href="/user/medicines" onClick={onClose} style={{ display: "block", padding: "12px 14px", borderRadius: "10px", backgroundColor: "#ffffff", color: "#7c2d12", textDecoration: "none", fontWeight: 700 }}>
+          薬管理
+        </Link>
+
+        <Link href="/user/reminders" onClick={onClose} style={{ display: "block", padding: "12px 14px", borderRadius: "10px", backgroundColor: "#ffffff", color: "#7c2d12", textDecoration: "none", fontWeight: 700 }}>
+          リマインド設定
+        </Link>
+
+        <Link href="/user/settings" onClick={onClose} style={{ display: "block", padding: "12px 14px", borderRadius: "10px", backgroundColor: "#ffffff", color: "#7c2d12", textDecoration: "none", fontWeight: 700 }}>
+          設定
         </Link>
       </aside>
     </>

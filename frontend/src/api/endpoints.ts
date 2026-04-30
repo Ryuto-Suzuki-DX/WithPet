@@ -21,18 +21,14 @@ export const ENDPOINTS = {
   /*
    * USER
    */
-  // マイページ？
   user: {
     mypage: "/api/v1/user/mypage",
+    petDetail: (petId: string) => `/api/v1/user/pets/${petId}`,
+    remindSetting: "/api/v1/user/settings/remind",
+    remindTestEmail: "/api/v1/user/settings/remind/test-email",
+    petEvents: (petId: number) => `/api/v1/user/pets/${petId}/events`,
+    careTemplates: (petId: number) => `/api/v1/user/pets/${petId}/care-templates`,
+    careTemplate: (petId: number, templateId: number) => `/api/v1/user/pets/${petId}/care-templates/${templateId}`,
+    petEvent: (petId: number, eventId: number) => `/api/v1/user/pets/${petId}/events/${eventId}`,
   },
-
-  pet: {
-    list: "/api/v1/user/pets",
-    detail: (petId: string) => `/api/v1/user/pets/${petId}`,
-  },
-
-  record: {
-    list: "/api/v1/user/records",
-    detail: (recordId: string) => `/api/v1/user/records/${recordId}`,
-  },
-} as const;
+};

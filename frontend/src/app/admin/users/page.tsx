@@ -6,7 +6,7 @@ import { Menu } from "lucide-react";
 import UserSearchForm from "@/components/feature/admin/UserSearchForm";
 import UserTable from "@/components/feature/admin/UserTable";
 import { extractSearchListData } from "@/api/data";
-import { searchUsers } from "@/api/admin";
+import { searchUsers, deleteUser } from "@/api/admin";
 import type { User } from "@/types/admin/admin_type"
 import SideMenu from "../sideMenu/sideMenu";
 
@@ -20,9 +20,10 @@ export default function AdminUsersPage() {
   const [error, setError] = useState("");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  const limit = 50;
   const [hasMore, setHasMore ] = useState(false);
   const [isFetchingMore, setIsFetchingMore] = useState(false);
+  const [deleteTargetUser, setDeleteTargetUser] = useState<User | null>(null);
+  const [isDeleteing, setIsDeleting] = useState(false);
 
   // 初回ロード時の初期値(検索用)
   const INITIAL_SEARCH_PARAMS = {
@@ -83,6 +84,28 @@ export default function AdminUsersPage() {
     }
   }
 
+  // 削除関数
+  async function handleConfirmDelete() {
+    if (!deleteTargetUser) return;
+
+    setIsDeleting(true);
+    setError("");
+
+    try {
+      await deleteUser(deleteTargetUser.id);
+
+      setDeleteTargetUser(null);
+
+      // 削除後は現在の検索条件で再取得
+      await fetchUsers(searchKeyword);
+    } catch (err) {
+      console.error(err);
+      setError("ユーザーの削除に失敗しました。");
+    } finally {
+      setIsDeleting(false);
+    }
+  }
+
   /*
    * トリガー集
    */
@@ -110,6 +133,25 @@ export default function AdminUsersPage() {
     router.push("/admin/users/new");
   }
 
+  // 詳細ボタン
+  function handleDetail(userId: number) {
+    router.push(`/admin/users/detail/${userId}`);
+  }
+
+  // 編集ボタン
+  function handleUpdate(userId: number) {
+    router.push(`/admin/users/update/${userId}`);
+  }
+
+  // 削除ボタン
+  function handleOpenDeleteModal(user: User) {
+    setDeleteTargetUser(user);
+  }
+
+  function handleCloseDeleteModal() {
+    if (isDeleteing) return;
+    setDeleteTargetUser(null);
+  }
 
   return (
     <>
@@ -164,7 +206,7 @@ export default function AdminUsersPage() {
               <p style={{ margin: 0, color: "#dc2626", fontSize: "14px" }}>{error}</p>
             ) : (
               <>
-                <UserTable users = {users} isLoading={isLoading} />
+                <UserTable users={users} isLoading={isLoading} onDetail={handleDetail} onUpdate={handleUpdate} onDelete={handleOpenDeleteModal} currentUserId={null} />
 
                 <div style={{ marginTop: "20px", display: "flex", justifyContent: "center" }}>
                   {hasMore ? (
@@ -198,6 +240,40 @@ export default function AdminUsersPage() {
           </section>
         </div>
       </main>
+
+      {deleteTargetUser && (
+        <div
+          style={{position: "fixed", inset: 0, backgroundColor: "rgba(0, 0, 0, 0.45)", display: "flex", alignItems: "center", justifyContent: "center", zIndex:1000 }}
+        >
+          <div style={{width: "420px", backgroundColor: "#ffffff", borderRadius: "12px", padding: "24px", boxShadow: "0 20px 40px rgba(0, 0, 0, 0.2)"}}
+          >
+            <h2
+              style={{ margin: 0, fontSize: "20px", fontWeight: 700, color: "#111827" }}
+            >
+              ユーザーを削除しますか？
+            </h2>
+            <p
+              style={{ margin: "16px 0 0 0", fontSize: "14px", color: "#374151", lineHeight: 1.7 }}
+            >
+              「{deleteTargetUser.name}」を削除します。
+              <br />
+              この操作は取り消せません。
+            </p>
+            <div style={{ marginTop: "24px", display: "flex", justifyContent: "flex-end", gap: "12px" }}
+            >
+              <button type="button" onClick={handleCloseDeleteModal} disabled={isDeleteing} style={{ border: "1px solid #d1d5db", borderRadius: "8px", padding: "10px 16px", backgroundColor: "#ffffff", color: "#374151", fontSize: "14px", fontWeight: 700, cursor: isDeleteing ? "not-allowed" : "pointer" }}
+              >
+                キャンセル
+              </button>
+              <button type="button" onClick={handleConfirmDelete} disabled={isDeleteing} style={{ border: "none", borderRadius: "8px", padding: "10px 16px", backgroundColor: isDeleteing ? "#d1d5db" : "#dc2626", color: "#ffffff", fontSize: "14px", fontWeight: 700, cursor: isDeleteing ? "not-allowed" : "pointer" }}
+              >
+                {isDeleteing ? "削除中..." : "削除する"}
+              </button>
+            </div>
+          </div>
+        </div>
+        
+      )}
     </>
   );
 }

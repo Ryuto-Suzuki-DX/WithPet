@@ -23,6 +23,12 @@ services:
       DB_USER: postgres
       DB_PASSWORD: postgres
       DB_NAME: withpet
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_USERNAME: ${SMTP_USERNAME}
+      SMTP_PASSWORD: ${SMTP_PASSWORD}
+      SMTP_FROM: ${SMTP_FROM}
+      SMTP_FROM_NAME: ${SMTP_FROM_NAME}
     depends_on:
       - db
     tty: true

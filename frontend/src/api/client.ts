@@ -1,6 +1,12 @@
 /*
  * API通信の共通エンジン
  */
+
+ /*
+  * フロントへのレスポンスの形を整えるところであり、
+  * メッセージも含めて返信を行う
+  */
+
 import { getAccessToken, removeAccessToken } from "../lib/auth";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "";
@@ -23,7 +29,6 @@ async function parseResponse<T>(response: Response): Promise<T> {
   if (contentType && contentType.includes("application/json")) {
     return (await response.json()) as T;
   }
-
   return {} as T;
 }
 

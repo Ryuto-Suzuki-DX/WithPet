@@ -75,7 +75,7 @@ func (b *UserBuilder) BuildSearchUserQuery(condition types.SearchUsersCondition)
 	return query, nil
 }
 
-// メールアドレスでユーザーを検索するクエリ作成
+// メールアドレスでユーザーを検索するクエリ作成 ※削除済みユーザーは除外する
 func (b *UserBuilder) BuildFindUserByEmailQuery(email string) (*gorm.DB, error) {
 	if email == "" {
 		return nil, errors.New("メールアドレスが未指定です")
@@ -83,7 +83,7 @@ func (b *UserBuilder) BuildFindUserByEmailQuery(email string) (*gorm.DB, error) 
 
 	query := database.DB.
 		Model(&models.User{}).
-		Where("email = ?", email)
+		Where("email = ? AND is_deleted = ?", email, false)
 
 	return query, nil
 }

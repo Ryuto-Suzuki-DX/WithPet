@@ -10,6 +10,7 @@ func Migrate() {
 	err := DB.AutoMigrate(
 		&models.User{},
 		&models.Pet{},
+		&models.UserSetting{},
 		&models.MealTemplate{},
 		&models.MealTemplatePeriod{},
 		&models.MealDailyLog{},
