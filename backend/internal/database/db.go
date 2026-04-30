@@ -18,20 +18,24 @@ func Connect() {
 		log.Println(".env not found, using system environment variables")
 	}
 
+	dbHost := os.Getenv("DB_HOST")
+	dbUser := os.Getenv("DB_USER")
+	dbPassword := os.Getenv("DB_PASSWORD")
+	dbName := os.Getenv("DB_NAME")
+	dbPort := os.Getenv("DB_PORT")
+
 	dsn := fmt.Sprintf(
 		"host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=Asia/Tokyo",
-		os.Getenv("DB_HOST"),
-		os.Getenv("DB_USER"),
-		os.Getenv("DB_PASSWORD"),
-		os.Getenv("DB_NAME"),
-		os.Getenv("DB_PORT"),
+		dbHost,
+		dbUser,
+		dbPassword,
+		dbName,
+		dbPort,
 	)
 
-	log.Println("DB_HOST =", os.Getenv("DB_HOST"))
-	log.Println("DB_USER =", os.Getenv("DB_USER"))
-	log.Println("DB_PASSWORD =", os.Getenv("DB_PASSWORD"))
-	log.Println("DB_NAME =", os.Getenv("DB_NAME"))
-	log.Println("DB_PORT =", os.Getenv("DB_PORT"))
+	log.Println("DB_HOST =", dbHost)
+	log.Println("DB_NAME =", dbName)
+	log.Println("DB_PORT =", dbPort)
 
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
