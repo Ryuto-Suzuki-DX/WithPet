@@ -40,6 +40,8 @@ services:
     stdin_open: true
 
   db:
+    profiles:
+      - local-db
     image: postgres:16
     container_name: withpet-db
     ports:
